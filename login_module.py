@@ -2,9 +2,13 @@ import requests
 from bs4 import BeautifulSoup
 import os
 from dotenv import load_dotenv
+import urllib3
 
 # 載入 .env 檔案中的環境變數
 load_dotenv()
+
+# 禁用 SSL 警告
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # 從環境變數中讀取帳號和密碼
 username = os.getenv('NDHU_USERNAME')
@@ -46,7 +50,7 @@ def perform_login():
         if 'cache-control' not in get_request_headers:
             get_request_headers['cache-control'] = 'max-age=0'
 
-        response_get = session.get(login_url, headers=get_request_headers, timeout=15)
+        response_get = session.get(login_url, headers=get_request_headers, timeout=15, verify=False)
         response_get.raise_for_status()
         print(f"[*] GET 請求成功，狀態碼: {response_get.status_code}")
 
@@ -108,7 +112,7 @@ def perform_login():
 
         # 7. 發送 POST 登入請求
         print(f"\n[*] 發送 POST 請求到: {login_url}")
-        response_post = session.post(login_url, headers=headers_post, data=payload, timeout=15, allow_redirects=True)
+        response_post = session.post(login_url, headers=headers_post, data=payload, timeout=15, allow_redirects=True, verify=False)
         print(f"[*] POST 請求完成")
 
         # 8. 處理回應
