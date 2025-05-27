@@ -53,6 +53,8 @@ def perform_login():
         response_get = session.get(login_url, headers=get_request_headers, timeout=15, verify=False)
         response_get.raise_for_status()
         print(f"[*] GET 請求成功，狀態碼: {response_get.status_code}")
+        initial_cookies = response_get.cookies.get_dict()
+        print(f"[*] 從 GET 請求獲取的初始 Cookies: {initial_cookies}")
 
         # 5. 解析 HTML 以提取動態表單欄位
         soup = BeautifulSoup(response_get.text, 'html.parser')
@@ -131,30 +133,30 @@ def perform_login():
             print("[*] 登入似乎成功。")
             print("\n[*] 重定向後頁面的內容 (前500字元):")
             print(response_post.text[:500])
-            return session, response_post
+            return session, response_post, initial_cookies
         elif response_post.status_code == 302 and not response_post.history:
             location = response_post.headers.get('Location')
             print(f"[*] 收到 302 Found (未自動重定向). 重定向目標: {location}")
-            return session, response_post # 仍然回傳，讓呼叫者決定如何處理
+            return session, response_post, initial_cookies # 仍然回傳，讓呼叫者決定如何處理
         else:
             print(f"[!] 登入可能失敗或發生未知情況。")
             print(f"    最終 URL: {response_post.url}")
             print(f"    最終狀態碼: {response_post.status_code}")
             print("\n[*] 回應內容 (前500字元):")
             print(response_post.text[:500])
-            return None, response_post
+            return None, response_post, initial_cookies
 
     except requests.exceptions.Timeout:
         print(f"[!] 請求超時: {login_url}")
-        return None, None
+        return None, None, None
     except requests.exceptions.RequestException as e:
         print(f"[!] 請求過程中發生錯誤: {e}")
-        return None, None
+        return None, None, None
     except Exception as e:
         print(f"[!] 發生未預期錯誤: {e}")
         import traceback
         traceback.print_exc()
-        return None, None
+        return None, None, None
 
 if __name__ == '__main__':
     # 這個區塊可以用來測試 login_module.py 是否能獨立運作
